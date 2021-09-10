@@ -1,0 +1,75 @@
+version: '3.0'
+
+services:
+  container_1:
+    image: ubuntu:14.04 
+  container_2:
+    image: nginx
+
+
+###### docker-compose를 이용해 Django와 Mysql 컨테이너 연결하기 #####
+# Docker를 이용해 여러 컨테이너를 묶을 때, mysql이 있다면 계정명과 비밀번호를 설정해야 한다.
+# 이때 yaml에서는 import/include를 지원하지 않기 때문에 docker-compose에서 지원하는 방식을 사용
+# 같은 디렉토리에 있는 .env 파일을 환경변수 세팅 파일로써 가져오고, mysql 등과 같은 컨테이너에서
+# environment 인자로 계정명과 비밀번호를 세팅할 경우에는 .env 파일 사용
+
+# 1. 컨테이너에서 env_file을 명시하는 방법
+# 같은 디렉토리가 아니더라도 env파일을 여러개 만들어 두었다가 해당 파일의 경로를 읽어오는 식으로 env 변수 세팅 가능
+
+mysql:
+  image: mysql
+  container_name: mysql_service
+  env_file:
+    - ../mysqlenv
+  volumes:
+    - ../volumnes-mysql/mysql/:/var/lib/mysql/
+  command: mysql --character-set-server=utf8 --collation-server=utf8_general_ci
+  ports:
+   - "3306:3306"
+# env파일을 참조하는 것
+
+# volumes => ~~~~ (로컬 경로): ~~~~~ (컨테이너 경로)
+
+# 2. .env 파일을 이용하는 방법: 같은 디렉토리에 있는 .env파일을 자동으로 가져와 환경변수 인자로 사용하게끔 할 수 있다. 
+
+mysql:
+  image: mysql
+  container_name: mysql_service
+  volumes: 
+    - ../volumes-mysql/mysql/:/var/lib/mysql
+  environment:
+    MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
+    MYSQL_DATABASE: "${DB_DATABASE}"
+    MYSQL_USER: "${DB_USER}"
+    MYSQL_PASSWORD: "${DB_PASSWORD}"
+  command: mysqld --character-set-server=utf8 --collation-server=utf8_general_ci
+  ports:
+    - "3306:3306"
+# .env파일을 참조하는 것
+
+# .env파일은 변수명 = 값 형태로 저장, compose 파일에서 해당 변수명에 맞게 값을 세팅해서 사용할 수 있다.
+
+# 주의사항: 띄어쓰기 XXXX
+
+
+# 결과 확인은 docker0compose config 명령어
+
+
+
+
+#### 장고 컨테이너 설정
+# mysql 컨테이너 세팅을 위해 docker-compose와 env 파일 작성이 끝났으면 이제 장고에서 mysql과 연결시킬 준비
+# settings.py 파일 참조
+
+# django의 프로젝트 설정파일을 열어 DATABASES 항목을 settings.py와 같이 수정해준다.
+# 기본적으로 장고에서 지원하는 qllite 대신 mysql을 사용하기 위한 설정
+# 이후, 장고 컨테이너에서 mysql을 실행하기 위해 mysql 설치하기
+
+
+
+
+####### reference : https://my-repo.tistory.com/37 ######
+
+
+
+# docker-compose -f Docker-파일명 -> 이렇게 실행할 수 있다.
